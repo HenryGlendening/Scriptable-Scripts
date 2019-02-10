@@ -25,9 +25,9 @@ console.log(upcomingEarningsDateHtml)
 
 var parsedData = {}
 
-parsedData["Company Info"] = parseCompanyInfo(upcomingEarningsHtml)
+parsedData["Company Info"] = parseCompanyInfo(upcomingEarningsDateHtml)
 parsedData["Upcoming Earnings"] = parseUpcomingEarnings(upcomingEarningsDateHtml)
-
+parsedData["Recent EPS History"] = parseRecentEpsHistory(rawEarningsDateResponse)
 
 function parseCompanyInfo(unparsedHtmlData) {
   let companyNameRegex = /(.*?) (?:is expected|is estimated|hasn't provided us with)/
@@ -43,27 +43,38 @@ function parseCompanyInfo(unparsedHtmlData) {
 
 function parseUpcomingEarnings(unparsedHtmlData) {
   var upcomingEarningsDate = "TBD"
+  var timeOfDay = "-"
+  var numOfAnalysts = "-"
+  var currentQuarterEpsForecast = "-"
 
-  if (parsedUpcomingEarningsDateString.includes("hasn't provided us with") == false) {
+  if (unparsedHtmlData.includes("hasn't provided us with") == false) {
     let dateRegex = /((0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d) (.*?)\./i
-    upcomingEarningsDate = parsedUpcomingEarningsDateString.match(dateRegex)[1]
+    upcomingEarningsDate = unparsedHtmlData.match(dateRegex)[1]
     console.log(upcomingEarningsDate)
   
-    let timeOfDay = parsedUpcomingEarningsDateString.match(dateRegex)[5]
+    timeOfDay = unparsedHtmlData.match(dateRegex)[5]
     console.log(timeOfDay)
   
     let numOfAnalystsRegex = /\d{1,} analyst(s?)/g
-    let numOfAnalysts = parsedUpcomingEarningsDateString.match(numOfAnalystsRegex)[0]
+    numOfAnalysts = unparsedHtmlData.match(numOfAnalystsRegex)[0]
     console.log(numOfAnalysts)
   
     let currentQuarterEpsForecastRegex = /(?:forecast for the quarter is )(\$-?\d+\.\d{2})/i
-    let currentQuarterEpsForecast = parsedUpcomingEarningsDateString.match(currentQuarterEpsForecastRegex)[1]
+    currentQuarterEpsForecast = unparsedHtmlData.match(currentQuarterEpsForecastRegex)[1]
     console.log(currentQuarterEpsForecast)
-    
-    return {
-      "Date": upcomingEarningsDate,
-      "Number of Analysts": numOfAnalysts,
-      "Expected EPS": currentQuarterEpsForecast 
-    }
   }
+  
+  return {
+    "Date": upcomingEarningsDate,
+    "Time of Day": timeOfDay,
+    "Number of Analysts": numOfAnalysts,
+    "Expected EPS": currentQuarterEpsForecast 
+  }
+}
+
+function parseRecentEpsHistory(unparsedHtmlData) {
+  let recentEpsHistoryRegex = /Quarterly Earnings Surprise History(?:.|\n)*?(<table[^>]*>(?:.|\n)*?<\/table>)/is
+  let recentEpsHistoryHtml = rawEarningsDateResponse.replace(/[\n\r\t]/g,' ').match(recentEpsHistoryRegex)[1]
+  console.log(recentEpsHistoryHtml)
+  return
 }
