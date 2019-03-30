@@ -15,7 +15,7 @@ let stockSymbol = args.plainTexts[0]
 //let sessionRegex = /\d+$/
 //let sessionMatch = url.match(sessionRegex)
 //let session = sessionMatch[0]
-let earningsDateUrl = "https://nasdaq.com/earnings/report/" + "twlo"//stockSymbol
+let earningsDateUrl = "https://nasdaq.com/earnings/report/" + "nflx"//stockSymbol
 let earningsDateRequest = new Request(earningsDateUrl)
 let rawEarningsDateResponse = await earningsDateRequest.loadString()
 
@@ -25,11 +25,13 @@ console.log(upcomingEarningsDateHtml)
 
 var parsedData = {}
 
-parsedData["Company Info"] = parseCompanyInfo(upcomingEarningsDateHtml)
+parsedData["Company Info"] = parseCompanyName(upcomingEarningsDateHtml)
 parsedData["Upcoming Earnings"] = parseUpcomingEarnings(upcomingEarningsDateHtml)
 parsedData["Recent EPS History"] = parseRecentEpsHistory(rawEarningsDateResponse)
 
-function parseCompanyInfo(unparsedHtmlData) {
+//console.log(parsedData)
+
+function parseCompanyName(unparsedHtmlData) {
   let companyNameRegex = /(.*?) (?:is expected|is estimated|hasn't provided us with)/
   var companyName = unparsedHtmlData.match(companyNameRegex)[1]
   
@@ -48,20 +50,20 @@ function parseUpcomingEarnings(unparsedHtmlData) {
   var currentQuarterEpsForecast = "-"
 
   if (unparsedHtmlData.includes("hasn't provided us with") == false) {
-    let dateRegex = /((0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d) (.*?)\./i
+    let dateRegex = /(?:report earnings on\s+)((?:0[1-9]|1[012])[-\/\.](?:0[1-9]|[12][0-9]|3[01])[-\/\.](?:19|20)\d\d)/s
     upcomingEarningsDate = unparsedHtmlData.match(dateRegex)[1]
-    console.log(upcomingEarningsDate)
   
-    timeOfDay = unparsedHtmlData.match(dateRegex)[5]
-    console.log(timeOfDay)
+  let timeOfDayRegex = /(?:report earnings on\s+(?:0[1-9]|1[012])[-\/\.](?:0[1-9]|[12][0-9]|3[01])[-\/\.](?:19|20)\d\d )(.+?)\./s
+    timeOfDay = unparsedHtmlData.match(timeOfDayRegex)
+    if (timeOfDay && timeOfDay.length > 1) {
+      timeOfDay = timeOfDay[1]
+    }
   
     let numOfAnalystsRegex = /\d{1,} analyst(s?)/g
     numOfAnalysts = unparsedHtmlData.match(numOfAnalystsRegex)[0]
-    console.log(numOfAnalysts)
   
     let currentQuarterEpsForecastRegex = /(?:forecast for the quarter is )(\$-?\d+\.\d{2})/i
     currentQuarterEpsForecast = unparsedHtmlData.match(currentQuarterEpsForecastRegex)[1]
-    console.log(currentQuarterEpsForecast)
   }
   
   return {
@@ -78,3 +80,4 @@ function parseRecentEpsHistory(unparsedHtmlData) {
   console.log(recentEpsHistoryHtml)
   return
 }
+//
